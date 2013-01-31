@@ -1,0 +1,4 @@
+const char[6] PROGMEM;
+
+pgm_read_byte( c[5] );
+	_word(      );
