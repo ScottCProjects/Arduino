@@ -83,7 +83,6 @@ class pushbuttonswitch : public CallBackInterface
     port=digitalPinToPort(pin);
     pinMode(pin, INPUT);
     digitalWrite(pin, HIGH);
-    PCintPort::attachInterrupt(pin, this, mode);
   };
 };
 boolean pushbuttonswitch::start=false;
@@ -91,12 +90,12 @@ boolean pushbuttonswitch::start=false;
 // ***********************************************************************************
 // *** CLASS startswitch *************************************************************
 // ***********************************************************************************
-class startswitch : public pushbuttonswitch, public CallBackInterface
+class startswitch : public pushbuttonswitch
 {
  public:
   startswitch (uint8_t _spin, char *_sname, uint8_t _smode) :
     pushbuttonswitch(_spin, _sname, _smode),
-    detachables(NULL), initial(true) { }
+    detachables(NULL), initial(true) , usespare(false) { }
 
   void addDetachableSwitch(pushbuttonswitch *aswitch) {
     if (detachables==NULL) {
@@ -107,6 +106,10 @@ class startswitch : public pushbuttonswitch, public CallBackInterface
       tmp=tmp->next;
     }
     tmp->next=new detachableSwitch(aswitch); tmp=tmp->next; tmp->next=NULL;
+  }
+  
+  void setSpareSwitch(pushbuttonswitch *aswitch) {
+    spare=aswitch;
   }
   
   void cbmethod() {
@@ -126,16 +129,24 @@ class startswitch : public pushbuttonswitch, public CallBackInterface
       }
       pushbuttonswitch::start=false;
     } else {
-      printBuffer.putString("START! p");   uint8ToString(numBuffer, pin); printBuffer.putString(numBuffer);
+      printBuffer.putString("START! p"); uint8ToString(numBuffer, pin); printBuffer.putString(numBuffer);
       printBuffer.putString("-P"); uint8ToString(numBuffer, port); printBuffer.putString(numBuffer);
       printBuffer.putString("\n");
       if (! initial) {
         printBuffer.putString("re-Attach interrupts; ");
+        // BUG HERE: Freezes output entirely.
         while (tmp != NULL) {
-          PCintPort::attachInterrupt(tmp->aswitch->pin, tmp->aswitch, tmp->aswitch->mode);
+          if (tmp->aswitch->name[0] == 'A' && tmp->aswitch->name[1] == '3') {
+            if (tmp->aswitch->mode == CHANGE ) tmp->aswitch->mode=FALLING;
+            else tmp->aswitch->mode=CHANGE;
+            if (usespare) { PCintPort::attachInterrupt(spare->pin, spare, tmp->aswitch->mode); usespare=false; }
+            else { PCintPort::attachInterrupt(tmp->aswitch->pin, tmp->aswitch, tmp->aswitch->mode); usespare=true; }
+          } else
+            PCintPort::attachInterrupt(tmp->aswitch->pin, tmp->aswitch, tmp->aswitch->mode);
           uint8ToString(numBuffer, tmp->aswitch->pin); printBuffer.putString(" "); printBuffer.putString(numBuffer);
           tmp=tmp->next;
         }
+        // END BUG
         printBuffer.putString("\n");
       } else {
         initial=false;
@@ -147,6 +158,7 @@ class startswitch : public pushbuttonswitch, public CallBackInterface
 
  private:
    boolean initial;
+   boolean usespare;
    class detachableSwitch {
      public:
        detachableSwitch(pushbuttonswitch *_aswitch) : aswitch(_aswitch) {
@@ -157,5 +169,6 @@ class startswitch : public pushbuttonswitch, public CallBackInterface
    };
    detachableSwitch *detachables;
    detachableSwitch *tmp;
+   pushbuttonswitch *spare;
 };
 

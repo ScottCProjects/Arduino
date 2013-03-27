@@ -9,6 +9,7 @@
 #define ASSYS_H
 #include <Arduino.h>
 #include <SPI.h>
+#include <DHT22.h>
 
 // Define which serial to use,
 //  Change return values to SoftwareSerial "SerialBT"
@@ -75,18 +76,24 @@ short int getTemp( char cf )
 	short int hsTemp = humidSensor.getTemperatureCInt();
 
 	short int psTemp = hsTemp; // Change
-	return (hsTemp + psTemp)/2;
+
+	// Dummy return values
+	return (short int) random(500, 1100);
+	//return (hsTemp + psTemp)/2;
 }
 
 short int getPress()
 {
-	return 0;
+	// Dummy return values
+	return (short int) random(2000, 4000);
 }
 
 short int getHumid()
 {
 	humid_grabNewVals( humidSensor, lastReadTime );
-	return humidSensor.getHumidityInt();
+	// Dummy return values
+	return (short int) random(10, 40);
+	//return humidSensor.getHumidityInt();
 }
 
 String readInCommand()
@@ -94,16 +101,18 @@ String readInCommand()
 	String comm = "";
 	// Wait until input is available
 	while( !SERIALBT.available() );
-	// Grab until space or newline
-	while( SERIALBT.available() )
+	// Grab until space, newline, or EOF
+	/*while( SERIALBT.available() )
 	{
-		char inChar = (char)SERIALBT.read();
-		if( inChar == ' ' || inChar == '\n' )
+		// Convert from int to char
+		char inChar[1];
+		itoa( SERIALBT.read(), inChar, 10 );
+		if( *inChar == ' ' || *inChar == '\n' )
 			if( comm != "" ) return comm;
 		else
-			comm += inChar;	
-	}
-	return "";
+			comm += *inChar;	
+	}*/
+	return comm;
 }
 
 bool execCommand( String comm )

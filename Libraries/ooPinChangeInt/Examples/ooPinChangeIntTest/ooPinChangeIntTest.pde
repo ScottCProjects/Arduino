@@ -1,4 +1,8 @@
-// PinChangeIntTest, version 1.0 Wed Feb 15 07:25:09 CST 2012
+// ooPinChangeIntTest
+// version 1.0 Wed Feb 15 07:25:09 CST 2012
+// version 1.1 Wed Nov 21 18:20:46 CST 2012 Modified to test the new detachInterrupt() of ooPinChangeInt version 1.03beta.
+//      Also added code so that detach/attachInterrupt() can add different pushbutton object method calls.
+
 // See the Wiki at http://code.google.com/p/arduino-pinchangeint/wiki for more information.
 // This sketch requires the ByteBuffer library, which is found in the PinChangeInt zipfile.
 //
@@ -41,10 +45,12 @@ pushbuttonswitch pin2sw=pushbuttonswitch(2, "two", FALLING); // Port D
 pushbuttonswitch pin3sw=pushbuttonswitch(3, "three", RISING);
 pushbuttonswitch pin11sw=pushbuttonswitch(11, "eleven", CHANGE); // Port B
 pushbuttonswitch pin12sw=pushbuttonswitch(12, "twelve", RISING);
-pushbuttonswitch pinA3sw=pushbuttonswitch(A3, "A3", CHANGE); // PORTC, also can be given as 17
+pushbuttonswitch pinA3swa=pushbuttonswitch(A3, "A3a", CHANGE); // PORTC, also can be given as 17
+// This one doesn't get attached here...
+pushbuttonswitch pinA3swb=pushbuttonswitch(A3, "A3B", CHANGE); // PORTC, also can be given as 17
 startswitch startsw=startswitch(A4, "a4/start", FALLING); // starts and stops the count
 
-pushbuttonswitch *pins[6]={ &pin2sw, &pin3sw, &pin11sw, &pin12sw, &pinA3sw, &startsw };
+pushbuttonswitch *pins[6]={ &pin2sw, &pin3sw, &pin11sw, &pin12sw, &pinA3swa, &startsw };
 
 // HOW IT WORKS
 // The interrupt on Arduino pin A4 will, when triggered, start the counting of interrupts.  
@@ -158,7 +164,7 @@ Interrupt OFF on PIN1 (2) PIN3 (11) PIN5 (17)
                   +----+
 */
 
-ByteBuffer printBuffer(80);
+ByteBuffer printBuffer(120);
 
 long begintime=0;
 long now=0;
@@ -166,9 +172,16 @@ long now=0;
 uint8_t i;
 void setup() {
   Serial.begin(115200);
+  PCintPort::attachInterrupt(2, &pin2sw, FALLING);
+  PCintPort::attachInterrupt(3, &pin3sw, RISING);
+  PCintPort::attachInterrupt(11, &pin11sw, CHANGE);
+  PCintPort::attachInterrupt(12, &pin12sw, RISING);
+  PCintPort::attachInterrupt(A3, &pinA3swa, CHANGE);
+  PCintPort::attachInterrupt(A4, &startsw, FALLING);
   startsw.addDetachableSwitch(&pin3sw);
   startsw.addDetachableSwitch(&pin12sw);
-  startsw.addDetachableSwitch(&pinA3sw);
+  startsw.addDetachableSwitch(&pinA3swa);
+  startsw.setSpareSwitch(&pinA3swb);
   delay(250);
   Serial.println("Test");
   delay(500);

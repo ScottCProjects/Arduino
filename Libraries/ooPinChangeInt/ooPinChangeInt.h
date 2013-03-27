@@ -1,5 +1,8 @@
-// We use 4-character tabstops, so IN VIM:  <esc>:set ts=4
-// ...that's: ESCAPE key, colon key, then "s-e-t SPACE key t-s-=-4"
+//	This is the ooPinChangeInt library for the Arduino.
+//	See google code project for latest bugs and info http://code.google.com/p/arduino-oopinchangeint/
+
+// We use 4-character tabstops, so IN VIM:  <esc>:set ts=4 sw=4
+// ...that's: ESCAPE key, colon key, then "s-e-t SPACE key t-s = 4 SPACE key s-w = 4"
 //
 //-------- define these in your sketch, if applicable ----------------------------------------------------------
 //-------- This must go ahead of the #include ooPinChangeInt.h statement in your sketch ------------------------
@@ -16,12 +19,15 @@
 //
 // define DISABLE_PCINT_MULTI_SERVICE below to limit the handler to servicing a single interrupt per invocation.
 // #define       DISABLE_PCINT_MULTI_SERVICE
+// #define GET_OOPCIVERSION   // to enable the uint16_t getOOPCIintVersion () function.
 //-------- define the above in your sketch, if applicable ------------------------------------------------------
 
 /*
 	ooPinChangeInt.h
 	---- VERSIONS ----------------------------------------------------------------------------
 	Library begins with the PinChangeInt v 1.3 code.  See http://code.google.com/p/arduino-pinchangeint/
+
+	Version 1.03beta Wed Nov 21 18:20:46 CST 2012
 
 	Version 1.00 Sat Dec  3 22:56:20 CST 2011
 	Modified to use the new() operator and symbolic links instead of creating a pre-populated
@@ -44,23 +50,41 @@
 
 	Code uses the cbiface library, which is a much simplified and renamed version of cb.h
 	---- VERSIONS ----------------------------------------------------------------------------
+	This is the ooPinChangeInt library for the Arduino.
+	See google code project for latest, bugs and info http://code.google.com/p/arduino-oopinchangeint/
 
-	See google code project for latest, bugs and info http://code.google.com/p/arduino-pinchangeint/
-	For more information Refer to avr-gcc header files, arduino source and atmega datasheet.
+	This library provides an extension to the interrupt support for arduino by adding pin change
+	interrupts, giving a way for users to have interrupts drive off of any pin (ATmega328-based
+	Arduinos) and by the Port B, J, and K pins on the Arduino Mega and its ilk..
 
-	This library was inspired by and derived from "johnboiles" (it seems)
-	PCInt Arduino Playground example here: http://www.arduino.cc/playground/Main/PcInt
-	If you are the original author, please let us know at the google code page
+	This library was originally written by Chris J. Klick, Robot builder and all around geek, who said of it,
+		"HI, Yeah, I wrote the original PCint library. It was a bit of a hack and the new one has better
+		features.  I intended the code to be freely usable.  Didn't really think about a license.  Feel
+		free to use it in your code: I hereby grant you permission."
+	Thanks, Chris! A hack? I dare say not, if I have taken this any further it's merely by standing on the
+	shoulders of giants. This library was the best "tutorial" I found on Arduino Pin Change Interrupts
+	and because of that I decided to continue to maintain and (hopefully) improve it. We, the Arduino
+	community of robot builders and geeks, owe you a great debt of gratitude for your hack- a hack in
+	the finest sense.
 
-	It provides an extension to the interrupt support for arduino by
-	adding pin change interrupts, giving a way for users to have
-	interrupts drive off of any pin.
+	The library was then picked up by Lex Talionis, who created the Google Code website. We all owe a debt
+	of thanks to Lex, too, for all his hard work! He is currently the other official maintainer of this
+	code.
 
-	Please make any configuration changes in the accompanying PinChangeIntConfig.h file.
-	This will help avoid having to reset your config in the event of changes to the
-	library code (just don't replace that file when you update).
+	Chris' original PCInt Arduino Playground example here: http://www.arduino.cc/playground/Main/PcInt
 
-	Modified Thu Sep  8 07:33:17 CDT 2011 by GreyGnome.  See GreyGnome comment, below.
+	Many thanks to all the contributors who have contributed bug fixes, code, and suggestions
+	to this project: 
+	John Boiles and Baziki (who added fixes to PcInt), Maurice Beelen, nms277, Akesson Karlpetter, and
+	Orly Andico for various fixes to this code, Rob Tillaart for some excellent code reviews and nice
+	optimizations, Andre' Franken for a good bug report that kept me thinking, cserveny.tamas a special
+	shout out for providing the MEGA code to PinChangeInt- Thanks!
+
+	Regarding the MEGA and friends, Cserveny says: "J is mostly useless, because of the hardware UART. I was
+	not able to get pin change notifications from the TX pin (14), so only 15 left. All other pins are not
+	connected on the arduino boards."
+	
+	LICENSE
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -79,6 +103,8 @@
 
 #ifndef ooPinChangeInt_h
 #define	ooPinChangeInt_h
+
+#define OOPCIVERSION 1030
 
 #include "stddef.h"
 
@@ -111,12 +137,26 @@
 * A0-A5 (D14-D19) = PCINT 8-13 = PCIR1 = PC = PCIE1 = pcmsk1
 */
 
-#define	INLINE_PCINT
-#if ((defined(NO_PORTB_PINCHANGES) && defined(NO_PORTC_PINCHANGES)) || \
-			(defined(NO_PORTC_PINCHANGES) && defined(NO_PORTD_PINCHANGES)) || \
-			(defined(NO_PORTD_PINCHANGES) && defined(NO_PORTB_PINCHANGES)))
-#undef INLINE_PCINT
-#define	INLINE_PCINT inline
+
+#undef  INLINE_PCINT
+#define INLINE_PCINT
+// Thanks to cserveny...@gmail.com for MEGA support!
+#if defined __AVR_ATmega2560__ || defined __AVR_ATmega1280__ || defined __AVR_ATmega1281__ || defined __AVR_ATmega2561__ || defined __AVR_ATmega640__
+    #define __USE_PORT_JK
+    // Mega does not have PORTC or D
+    #define NO_PORTC_PINCHANGES
+    #define NO_PORTD_PINCHANGES
+    #if ((defined(NO_PORTB_PINCHANGES) && defined(NO_PORTJ_PINCHANGES)) || \
+            (defined(NO_PORTJ_PINCHANGES) && defined(NO_PORTK_PINCHANGES)) || \
+            (defined(NO_PORTK_PINCHANGES) && defined(NO_PORTB_PINCHANGES)))
+        #define INLINE_PCINT inline
+    #endif
+#else
+    #if ((defined(NO_PORTB_PINCHANGES) && defined(NO_PORTC_PINCHANGES)) || \
+            (defined(NO_PORTC_PINCHANGES) && defined(NO_PORTD_PINCHANGES)) || \
+            (defined(NO_PORTD_PINCHANGES) && defined(NO_PORTB_PINCHANGES)))
+        #define INLINE_PCINT inline
+    #endif
 #endif
 
 class PCintPort {
@@ -125,11 +165,13 @@ public:
 	portInputReg(*portInputRegister(index + 2)),
 	portPCMask(maskReg),
 	firstPin(NULL),
-	PCICRbit(1 << index)
+	PCICRbit(1 << index),
+	portRisingPins(0),
+	portFallingPins(0)
 	{ }
 	volatile	uint8_t&		portInputReg;
 	// cbIface should be an object instantiated from a subclass of CallBackInterface
-	static		void attachInterrupt(uint8_t pin, CallBackInterface* cbIface, int mode);
+	static		int8_t attachInterrupt(uint8_t pin, CallBackInterface* cbIface, int mode);
 	static		void detachInterrupt(uint8_t pin);
 	INLINE_PCINT void PCint();
 	static uint8_t curr;
@@ -147,20 +189,27 @@ protected:
 		#endif
 		PCintPin* next;
 	};
-	void		addPin(uint8_t arduinoPin,uint8_t mode,CallBackInterface* cbIface);
+	void		enable(PCintPin* pin, CallBackInterface* cbIface, uint8_t mode);
+	int8_t		addPin(uint8_t arduinoPin,CallBackInterface* cbIface, uint8_t mode);
 	void		delPin(uint8_t mask);
 	volatile	uint8_t&		portPCMask;
 	const		uint8_t			PCICRbit;
-	uint8_t		lastPinView;
+	volatile	uint8_t	portRisingPins;
+	volatile	uint8_t	portFallingPins;
+	volatile	uint8_t		lastPinView;
 	PCintPin*	firstPin;
 };
 #endif
 // **********************************************************************************************************
 
-#ifdef   LIBCALL_OOPINCHANGEINT
+#ifdef   LIBCALL_OOPINCHANGEINT // LIBCALL_OOPINCHANGEINT *************************************************
 extern PCintPort portB;
 extern PCintPort portC;
 extern PCintPort portD;
+#ifdef __USE_PORT_JK
+extern PCintPort portJ;
+extern PCintPort portK;
+#endif
 #else // LIBCALL_OOPINCHANGEINT
 uint8_t PCintPort::curr=0;
 #ifndef NO_PORTB_PINCHANGES
@@ -174,183 +223,184 @@ PCintPort portC=PCintPort(1,PCMSK1); // port PC==3  (also in pins_arduino.c, Ard
 #ifndef NO_PORTD_PINCHANGES
 PCintPort portD=PCintPort(2,PCMSK2); // port PD==4
 #endif
+
+#ifdef __USE_PORT_JK
+
+#ifndef NO_PORTJ_PINCHANGES
+PCintPort portJ=PCintPort(10,1,PCMSK1); // port PJ==10 
+#endif
+
+#ifndef NO_PORTK_PINCHANGES
+PCintPort portK=PCintPort(11,2,PCMSK2); // port PK==11
+#endif
+
+#endif
+
 #endif // LIBCALL_OOPINCHANGEINT
 
 #ifndef   LIBCALL_OOPINCHANGEINT
-void PCintPort::addPin(uint8_t arduinoPin, uint8_t mode,CallBackInterface* cbIface)
+
+static PCintPort *lookupPortNumToPort( int portNum ) {
+    PCintPort *port = NULL;
+
+        switch (portNum) {
+#ifndef NO_PORTB_PINCHANGES
+        case 2:
+                port=&portB;
+                break;
+#endif
+#ifndef NO_PORTC_PINCHANGES
+        case 3:
+                port=&portC;
+                break;
+#endif
+#ifndef NO_PORTD_PINCHANGES
+        case 4:
+                port=&portD;
+                break;
+#endif
+#ifdef __USE_PORT_JK
+
+#ifndef NO_PORTJ_PINCHANGES
+        case 10:
+                port=&portJ;
+                break;
+#endif
+
+#ifndef NO_PORTK_PINCHANGES
+        case 11:
+                port=&portK;
+                break;
+#endif
+
+#endif
+    }
+
+    return port;
+}
+
+void PCintPort::enable(PCintPin* p, CallBackInterface* cbIface, uint8_t mode) {
+    // Enable the pin for interrupts by adding to the PCMSKx register.
+    // ...The final steps; at this point the interrupt is enabled on this pin.
+    p->mode=mode;
+    p->pinCallBack=cbIface;
+    portPCMask |= p->mask;
+    if ((p->mode == RISING) || (p->mode == CHANGE)) portRisingPins |= p->mask;
+    if ((p->mode == FALLING) || (p->mode == CHANGE)) portFallingPins |= p->mask;
+    PCICR |= PCICRbit;
+}
+
+int8_t PCintPort::addPin(uint8_t arduinoPin, CallBackInterface* cbIface, uint8_t mode)
 {
+	PCintPin* tmp;
+	uint8_t bitmask=digitalPinToBitMask(arduinoPin);
+
+	// Add to linked list, starting with firstPin
+	if (firstPin != NULL) {
+		tmp=firstPin;
+		do {
+			if (tmp->mask == bitmask) { enable(tmp, cbIface, mode); return(0); }
+			if (tmp->next == NULL) break;
+			tmp=tmp->next;
+		} while (true);
+	}
+
 	// Create pin p:  fill in the data
 	PCintPin* p=new PCintPin;
+	if (p == NULL) return(-1);
 	p->mode = mode;
 	p->next=NULL;
-	//portPCMask |= p->mask = digital_pin_to_bit_mask[arduinoPin]; // the mask - MIKE
-	p->mask = digitalPinToBitMask(arduinoPin); // the mask
+	p->mask = bitmask; // the mask
 	// ...Pin created
 
-	if (p == NULL) return;
-	// Add to linked list, starting with firstPin
 	if (firstPin == NULL) firstPin=p;
-	else {
-		PCintPin* tmp=firstPin;
-		while (tmp->next != NULL) {
-				tmp=tmp->next;
-		};
-		tmp->next=p;
-	}
-	// Now we attach the object which has subclassed the CallBackInterface
-	p->pinCallBack=cbIface;
+	else tmp->next=p;
 #ifdef DEBUG
 	Serial.print("addPin. pin given: "); Serial.print(arduinoPin, DEC), Serial.print (" pin stored: ");
 	int addr = (int) p;
 	Serial.print(" instance addr: "); Serial.println(addr, HEX);
 #endif
-	portPCMask |= p->mask;
-	PCICR |= PCICRbit;
-}
-
-void PCintPort::delPin(uint8_t mask)
-{
-		PCintPin* current=firstPin;
-		PCintPin* prev=NULL;
-		while (current) {
-				if (current->mask == mask) { // found the target
-						uint8_t oldSREG = SREG;
-						cli(); // disable interrupts
-						portPCMask &= ~mask; // disable the mask entry.
-						if (portPCMask == 0) PCICR &= ~(PCICRbit);
-						// Link the previous' next to the found next. Then remove the found.
-						if (prev != NULL) prev->next=current->next; // linked list skips over current.
-			else firstPin=current->next; // at the first pin; save the new first pin
-			delete current;
-			SREG = oldSREG; // Restore register; reenables interrupts
-			return;
-		}
-		prev=current;
-		current=current->next;
-	}
+	enable(p, cbIface, mode);
+	return(1);
 }
 
 /*
  * attach an interrupt to a specific pin using pin change interrupts.
  */
-void PCintPort::attachInterrupt(uint8_t arduinoPin, CallBackInterface* cbIface, int mode)
+int8_t PCintPort::attachInterrupt(uint8_t arduinoPin, CallBackInterface* cbIface, int mode)
 {
 	PCintPort *port;
 	uint8_t portNum = digitalPinToPort(arduinoPin);
-	if ((portNum == NOT_A_PORT) || (cbIface == NULL)) return;
+	if ((portNum == NOT_A_PORT) || (cbIface == NULL)) return(-1);
 
-	switch (portNum) {
-#ifndef NO_PORTB_PINCHANGES
-	case 2:
-		port=&portB;
-		break;
-#endif
-#ifndef NO_PORTC_PINCHANGES
-	case 3:
-		port=&portC;
-		break;
-#endif
-#ifndef NO_PORTD_PINCHANGES
-	case 4:
-		port=&portD;
-#endif
-	}
+	port=lookupPortNumToPort(portNum);
 	// Added by GreyGnome... must set the initial value of lastPinView for it to be correct on the 1st interrupt.
 	// ...but even then, how do you define "correct"?  Ultimately, the user must specify (not provisioned for yet).
 	port->lastPinView=port->portInputReg;
 
-	// map pin to PCIR register
-	port->addPin(arduinoPin,mode,cbIface);
 #ifdef DEBUG
 	Serial.print("attachInterrupt FUNC: "); Serial.println(arduinoPin, DEC);
 #endif
+	// map pin to PCIR register
+	return(port->addPin(arduinoPin,cbIface,mode));
 }
 
 void PCintPort::detachInterrupt(uint8_t arduinoPin)
 {
 	PCintPort *port;
+   	PCintPin* current;
+   	uint8_t mask;
+    
 #ifdef DEBUG
 	Serial.print("detachInterrupt: "); Serial.println(arduinoPin, DEC);
 #endif
 	uint8_t portNum = digitalPinToPort(arduinoPin);
-	if (portNum == NOT_A_PORT) {
-		return;
+	if (portNum == NOT_A_PORT) return;
+	port=lookupPortNumToPort(portNum);
+	mask=digitalPinToBitMask(arduinoPin);
+	current=port->firstPin;
+	while (current) {
+		if (current->mask == mask) { // found the target
+			uint8_t oldSREG = SREG;
+			cli(); // disable interrupts
+			port->portPCMask &= ~mask; // disable the mask entry.
+			if (port->portPCMask == 0) PCICR &= ~(port->PCICRbit);
+			port->portRisingPins &= ~mask; port->portFallingPins &= ~mask;
+			SREG = oldSREG; // Restore register; reenables interrupts
+			return;
+		}
+		current=current->next;
 	}
-	switch (portNum) {
-#ifndef NO_PORTB_PINCHANGES
-	case 2:
-		port=&portB;
-		break;
-#endif
-#ifndef NO_PORTC_PINCHANGES
-	case 3:
-		port=&portC;
-		break;
-#endif
-#ifndef NO_PORTD_PINCHANGES
-	case 4:
-		port=&portD;
-#endif
-	}
-	port->delPin(digitalPinToBitMask(arduinoPin)); // MIKE
 }
 
 // common code for isr handler. "port" is the PCINT number.
 // there isn't really a good way to back-map ports and masks to pins.
 void PCintPort::PCint() {
+	uint8_t thisChangedPin, changedPins;
 	#ifndef DISABLE_PCINT_MULTI_SERVICE
 	uint8_t pcifr;
 	do {
 	#endif
 		// get the pin states for the indicated port.
-		uint8_t changedPins = PCintPort::curr ^ lastPinView;
+		//uint8_t changedPins = PCintPort::curr ^ lastPinView;
+		//lastPinView = PCintPort::curr;
+		//changedPins &= portPCMask;
+		// NEW
+
+		changedPins=(PCintPort::curr ^ lastPinView) &
+					((portRisingPins & PCintPort::curr) | ( portFallingPins & ~PCintPort::curr));
 		lastPinView = PCintPort::curr;
-		changedPins &= portPCMask;
-		// This code removed because the only pins that can trigger an interrupt are
-		// pins that are enabled via the PCMASK[0-2], therefore, we are here because of
-		// an interrupt.  Other pins on that port that have not been assigned an interrupt
-		// will not trigger an interrupt. We assume the pins have not been enabled by
-		// another method outside of the PinChangeInt code. Even if they have, the worst
-		// that will happen is that this interrupt will be called but no user method
-		// will be called; the extra pin will not be chosen in any event.
-		//
-		// screen out non pcint pins.
-		//if ((changedPins &= portPCMask) == 0) {
-		//	return;
-		//}
 
 		PCintPin* p = firstPin;
-		/* Example: Do it the array way.  Note that the pinArray has not been created.
-		 * This is left as an exercise for the programmer.
-		 */
-		/*
-		uint8_t i=0;
-		uint8_t mode;
-		while (changedPins) {
-			if ( changedPins & 0b00001111 ) i=0; else { i=4; changedPins >>= 4; } // optimization
-			if (changedPins & 0x1) {
-				mode=pinArray[i]->mode;
-				if (     mode == CHANGE
-					|| ((mode == RISING)  &&  (curr & p->mask))
-					|| ((mode == FALLING) && !(curr & p->mask)) ) {
-				(*(pinArray[i]->pinCallBack))(); // pinArray is an ordered array of the pins for this port
-			}
-			changedPins >> 1; i++;
-		}
-		*/
-		/* Do it the pointer way */
 		while (p) {
 			if (p->mask & changedPins) { // a changed bit
 				// Trigger interrupt if mode is CHANGE, or if mode is RISING and
 				// the bit is currently high, or if mode is FALLING and bit is low.
-				if (     p->mode == CHANGE
-					|| ((p->mode == RISING)  &&  (PCintPort::curr & p->mask))
-					|| ((p->mode == FALLING) && !(PCintPort::curr & p->mask)) ) {
 					#ifndef NO_PIN_STATE
 					p->state=PCintPort::curr & p->mask ? HIGH : LOW;
 					#endif
 					(*(p->pinCallBack)).cbmethod();
-				}
+				//}
 			}
 			//changedPins ^= p->mask;  // MIKE:  Check on this optimization.
 			//if (!changedPins) break;
@@ -358,8 +408,10 @@ void PCintPort::PCint() {
 		}
 	#ifndef DISABLE_PCINT_MULTI_SERVICE
 		pcifr = PCIFR & PCICRbit;
-		PCIFR = pcifr;	// clear the interrupt if we will process it (no effect if bit is zero)
-	} while(pcifr);
+		if (pcifr == 0) break;
+		PCIFR |= pcifr;	// clear the interrupt if we will process it (no effect if bit is zero)
+		PCintPort::curr=portInputReg;
+	} while (true);
 	#endif
 }
 
@@ -383,4 +435,33 @@ ISR(PCINT2_vect) {
 	portD.PCint();
 }
 #endif
+
+#ifdef __USE_PORT_JK
+#ifndef NO_PORTJ_PINCHANGES
+ISR(PCINT1_vect) {
+	#ifdef PINMODE
+	PCintPort::s_PORT='J';
+	#endif
+	PCintPort::curr = portJ.portInputReg;
+	portJ.PCint();
+}
+#endif
+
+#ifndef NO_PORTK_PINCHANGES
+ISR(PCINT2_vect){ 
+	#ifdef PINMODE
+	PCintPort::s_PORT='K';
+	#endif
+	PCintPort::curr = portK.portInputReg;
+	portK.PCint();
+}
+#endif
+
+#endif // __USE_PORT_JK
+
+#ifdef GET_OOPCIVERSION
+uint16_t getOOPCIntVersion () {
+	return ((uint16_t) OOPCIVERSION);
+}
+#endif // GET_OOPCIVERSION
 #endif // LIBCALL_OOPINCHANGEINT

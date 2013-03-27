@@ -3,15 +3,20 @@
 // Version 1.1 - added code to test digitalRead()
 // Version 1.2 - added new comments for the #define's for the NO_PORTx_PINCHANGES.
 // Version 1.3 - includes cbiface.h with ooPinChangeInt, rather than cb.h
+// Version 1.4 - testing version 2.10Beta with robtillaart's optimization
 //   Also added a #define/#undef INLINE_PCINTFUNC for inlining of the function called by the interrupt.
 //   Default:  #undef for using the function as per usual.  Changed PCIVERSION so that
 //   ooPinChangeInt starts at 1000 instead of 200.  Modified the "Start" message to show "Start..", pause
 //   for 1 second, show "*\n" (where \n is a newline), pause for 1 second, then run the test.
 // Version 1.4 - made this compatible with version 1.5 of PinChangeInt
+// Version 1.5 - modified it to use #define OOPCIVERSION for ooPinChangeInt
 
 // This version number is for PinChangeInt
-#define PCIVERSION 150 // 110 if using PinChangeInt-1.1, 120 for version 1.2
+#define OOPCIVERSION 1030
+#ifndef OOPCIVERSION
+#define PCIVERSION 217 // 110 if using PinChangeInt-1.1, 120 for version 1.2
                        // 1000 for ooPinChangeIntversion 1.00, 1001 for ooPinChangeInt version 1.01, etc.
+#endif
 
 //-------- define these in your sketch, if applicable ----------------------------------------------------------
 // You can reduce the memory footprint of this handler by declaring that there will be no pin change interrupts
@@ -28,9 +33,9 @@
 // if there is only one PCInt vector in use the code can be inlined
 // reducing latency and code size
 // define DISABLE_PCINT_MULTI_SERVICE below to limit the handler to servicing a single interrupt per invocation.
-// #define       DISABLE_PCINT_MULTI_SERVICE
+//#define       DISABLE_PCINT_MULTI_SERVICE
 //-------- define the above in your sketch, if applicable ------------------------------------------------------
-#if defined(PCIVERSION) && PCIVERSION >= 1000
+#if defined(OOPCIVERSION)
   #define LIBRARYUNDERTEST "ooPinChangeInt"
   #include <ooPinChangeInt.h>
   #if PCIVERSION == 1001
@@ -64,7 +69,7 @@
 #include <MemoryFree.h>
 #endif
 
-#define TEST 1
+#define TEST 7
 
 #if   TEST == 1
 #define PTEST 2  // pin to trigger interrupt.  pins 0 and 1 are used
@@ -114,6 +119,7 @@ void quicfunc() {
   qf0=TCNT0;
 }
 
+#if defined(OOPCIVERSION)
 class speedy : public CallBackInterface
 {
  public:
@@ -129,6 +135,7 @@ class speedy : public CallBackInterface
    };
 };
 uint8_t speedy::var0=0;
+#endif
 
 volatile uint8_t *led_port;
 volatile uint8_t *pinT_OP;
@@ -137,7 +144,9 @@ uint8_t led_mask, not_led_mask;
 uint8_t pinT_M, not_pinT_M;
 volatile uint8_t pintest, pinIntLow, pinIntHigh;
 uint8_t totalpins;
+#if defined(OOPCIVERSION)
 speedy speedster[8]={speedy(0), speedy(1), speedy(2), speedy(3), speedy(4), speedy(5), speedy(6), speedy(7) };
+#endif
 #ifdef MEMTEST
 int freemem;
 #endif
@@ -149,7 +158,7 @@ void setup()
 {
 #ifdef SERIALSTUFF
   Serial.begin(115200); Serial.println("---------------------------------------");
-#endif SERIALSTUFF
+#endif // SERIALSTUFF
   // set up ports for trigger
   pinMode(0, OUTPUT); digitalWrite(0, HIGH);
   pinMode(1, OUTPUT); digitalWrite(1, HIGH);
@@ -178,17 +187,19 @@ void setup()
   not_pinT_M=pinT_M^0xFF;                       // not-mask
   *pinT_OP|=pinT_M;
   for (i=pinIntLow; i <= pinIntHigh; i++) {
-#if PCIVERSION >= 1000
+#if defined(OOPCIVERSION)
     PCintPort::attachInterrupt(i, &speedster[i], CHANGE); // C++ technique; v1.3 or better
-#else
-    PCintPort::attachInterrupt(i, &quicfunc, CHANGE);      // C technique; v1.2 or earlier
+#endif
+#if defined(PCIVERSION)
+    PCintPort::attachInterrupt((uint8_t) i, &quicfunc, CHANGE);      // C technique; v1.2 or earlier
 #endif
   }
 #if TEST == 2 || TEST == 3
   i=5; totalpins=2;
-#if PCIVERSION >= 1000
+#if defined(OOPCIVERSION)
   PCintPort::attachInterrupt(i, &speedster[i], CHANGE); // C++ technique; v1.3 or better
-#else
+#endif
+#if defined(PCIVERSION)
   PCintPort::attachInterrupt(i, &quicfunc, CHANGE);      // C technique; v1.2 or earlier
 #endif
 #else
@@ -207,9 +218,7 @@ void loop() {
   Serial.print("TEST: "); Serial.print(TEST, DEC); Serial.print(" ");
 #ifndef MEMTEST
   Serial.print("test pin mask: "); Serial.print(pinT_M, HEX);
-  Serial.print(" interrupted pin: ");
-  Serial.print(speedster[pintest].id, DEC);
-  Serial.print(" of a total of "); Serial.print(totalpins, DEC); Serial.println(" pins.");
+  Serial.print(". Total of "); Serial.print(totalpins, DEC); Serial.println(" pins enabled.");
 #endif
 #ifdef MEMTEST
   freemem=freeMemory(); Serial.print("Free memory: ");  Serial.println(freemem, DEC);
@@ -217,7 +226,7 @@ void loop() {
 #endif
   delay(1000);
   Serial.print("Start..");
-  delay(1000); Serial.println("*");
+  delay(1000); Serial.print("*");
   #ifdef FLASH
   *led_port|=led_mask;
   #endif
@@ -236,10 +245,19 @@ void loop() {
   *led_port&=not_led_mask;
   #endif
   elapsed=milliEnd-milliStart;
-#ifdef SERIALSTUFF
-#ifndef MEMTEST
-  Serial.print("Elapsed: "); 
+  #ifndef MEMTEST
+  Serial.print(" Elapsed: "); 
   Serial.println(elapsed, DEC);
+  #endif
+  #ifdef SERIALSTUFF
+  Serial.print("Interrupted pin: ");
+  #if defined(OOPCIVERSION)
+  Serial.println(speedster[pintest].id, DEC);
+  #else
+  Serial.println(PCintPort::arduinoPin, DEC);
+  #endif
+#ifdef MEMTEST
+  freemem=freeMemory(); Serial.print("END-Free memory: ");  Serial.println(freemem, DEC);
 #endif
 #endif
   delay(500);

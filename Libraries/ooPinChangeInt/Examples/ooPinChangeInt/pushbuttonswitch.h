@@ -15,7 +15,6 @@ char numBuffer[4] = { 0, 0, 0, 0 };
 // Use this class as a template to create your own; it's not hard.  You don't
 // even have to understand what you're doing at first.
 // How do you subclass?  Like this:
-
 class pushbuttonswitch : public CallBackInterface
 {
  public:

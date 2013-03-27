@@ -67,14 +67,14 @@ public:
 	uint8_t put(byte in);
 	uint8_t putString(char *in);
 
-	int putIntInFront(int in);
-	int putInt(int in);
+	void putIntInFront(int in);
+	void putInt(int in);
 
-	int putLongInFront(long in);
-	int putLong(long in);
+	void putLongInFront(long in);
+	void putLong(long in);
 
-	int putFloatInFront(float in);
-	int putFloat(float in);
+	void putFloatInFront(float in);
+	void putFloat(float in);
 
 	//
 	// Get methods, either a regular get from front or from back
