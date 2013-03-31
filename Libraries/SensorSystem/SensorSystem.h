@@ -8,7 +8,6 @@
 #ifndef ASSYS_H
 #define ASSYS_H
 #include <Arduino.h>
-#include <SPI.h>
 #include <DHT22.h>
 
 // Define which serial to use,
@@ -77,32 +76,34 @@ short int getTemp( char cf )
 
 	short int psTemp = hsTemp; // Change
 
-	// Dummy return values
+	// ***Dummy return values
 	return (short int) random(500, 1100);
 	//return (hsTemp + psTemp)/2;
 }
 
 short int getPress()
 {
-	// Dummy return values
+	// ***Dummy return values
 	return (short int) random(2000, 4000);
 }
 
 short int getHumid()
 {
 	humid_grabNewVals( humidSensor, lastReadTime );
-	// Dummy return values
+	// ***Dummy return values
 	return (short int) random(10, 40);
 	//return humidSensor.getHumidityInt();
 }
 
 String readInCommand()
 {
+	// ***Debug return
+	return "";
 	String comm = "";
 	// Wait until input is available
 	while( !SERIALBT.available() );
 	// Grab until space, newline, or EOF
-	/*while( SERIALBT.available() )
+	while( SERIALBT.available() )
 	{
 		// Convert from int to char
 		char inChar[1];
@@ -111,7 +112,7 @@ String readInCommand()
 			if( comm != "" ) return comm;
 		else
 			comm += *inChar;	
-	}*/
+	}
 	return comm;
 }
 

@@ -1,12 +1,8 @@
 #include <DHT22.h>
-//#include <SPI.h>
+#include <SPI.h>
 #include <SensorSystem.h>
 //#include <SoftwareSerial.h>
 
-/*
-#define 
-
-*/
 String command;
 
 void setup()
