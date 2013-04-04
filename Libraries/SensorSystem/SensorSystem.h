@@ -8,7 +8,10 @@
 #ifndef ASSYS_H
 #define ASSYS_H
 #include <Arduino.h>
+#include <DebugOut.h>
 #include <DHT22.h>
+
+//DebugOut.on();
 
 // Define which serial to use,
 //  Change return values to SoftwareSerial "SerialBT"

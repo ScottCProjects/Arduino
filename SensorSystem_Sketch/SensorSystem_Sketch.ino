@@ -25,5 +25,5 @@ void loop()
   Serial.println("Executing: " + command);
   if( execCommand(command) != 0 )
     Serial.println("*Invalid Command" );
-  
+  delay(1000);
 }
