@@ -3,6 +3,12 @@
 // February 2013
 // GlobalResolve Weather Warning System
 // - Arduino Sensor System Library
+//
+// 
+//	Issues:
+//		- Completely inconsistant OO C++ style and non-OO C style
+//		- Humidity Sensor simply not working.
+//
 //============================================================
 
 #ifndef ASSYS_H
@@ -17,9 +23,11 @@
 //  Change return values to SoftwareSerial "SerialBT"
 //  Keep error returns to regular Serial
 #define SERIALBT Serial
+#define DEBUG Serial
+
 #define DELAYTIME 2000
 
-#define DHT22_PIN 7
+#define DHT22_PIN 8
 
 DHT22 humidSensor(DHT22_PIN);
 DHT22_ERROR_t errorCode;
@@ -98,10 +106,9 @@ short int getHumid()
 	//return humidSensor.getHumidityInt();
 }
 
+// Read single word command from Serial
 String readInCommand()
 {
-	// ***Debug return
-	return "";
 	String comm = "";
 	// Wait until input is available
 	while( !SERIALBT.available() );
@@ -109,12 +116,17 @@ String readInCommand()
 	while( SERIALBT.available() )
 	{
 		// Convert from int to char
-		char inChar[1];
-		itoa( SERIALBT.read(), inChar, 10 );
-		if( *inChar == ' ' || *inChar == '\n' )
-			if( comm != "" ) return comm;
+		char inChar = (char)Serial.read();
+
+		// If it's the end of a word, end input
+		if( (inChar == '\0' || inChar == '\n' || inChar == ' ')
+				&& comm != "" )
+			return comm;
+		// Else concatenate with rest of word
 		else
-			comm += *inChar;	
+			comm += inChar;	
+		// Delay to allow Serial buffer to populate, otherwise cuts off
+		delay(2);
 	}
 	return comm;
 }
@@ -123,6 +135,9 @@ bool execCommand( String comm )
 {
 	switch( comm.charAt(0) )
 	{
+	// If empty, don't do anything
+	case '\0':
+		return 0;
 	case 't':
 	case 'T':
 		SERIALBT.println( getTemp(comm.charAt(1)) );
