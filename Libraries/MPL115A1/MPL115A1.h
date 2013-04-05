@@ -39,11 +39,13 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif 
 
+#define Byte uint8_t
+
 class MPL115A1
 {
 private:
+	Byte sdn, csn, sdo, sdi, sck;
 
-	void init_SPI();
 	void writeData(char data);
 	char readData();
 	char read(uint8_t address);
@@ -51,14 +53,43 @@ private:
 	float calculatePressure();
 
 public:
-	
+	// No Default constructor, must define pins
+	MPL115A1( Byte sdnP, Byte csnP,
+			Byte sdoP, Byte sdiP, Byte sckP )
+	: sdn(sdnP), csn(csnP), sdo(sdoP), sdi(sdiP), sck(sckP)
+	{}
 
 };
 
 
-bool testMain()
+int MPL115A1_testMain()
 {
+	Serial.begin(9600);
+	MPL115A1 bp( 9, 8, 12, 11, 13 );
+	
+	init_SPI();
+	sbi( PORTB, CS );
+	sbi( PORTB, SDN );
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif
