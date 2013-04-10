@@ -14,10 +14,8 @@
 #ifndef ASSYS_H
 #define ASSYS_H
 #include <Arduino.h>
-#include <DebugOut.h>
 #include <DHT22.h>
-
-//DebugOut.on();
+#include <MPL115A1.h>
 
 // Define which serial to use,
 //  Change return values to SoftwareSerial "SerialBT"
@@ -31,6 +29,9 @@
 
 DHT22 humidSensor(DHT22_PIN);
 DHT22_ERROR_t errorCode;
+
+MPL115A1 bpsensor;
+
 unsigned long lastReadTime = 0;
 //SoftwareSerial SerialBT(3, 4);
 
@@ -95,7 +96,8 @@ short int getTemp( char cf )
 short int getPress()
 {
 	// ***Dummy return values
-	return (short int) random(2000, 4000);
+	//return (short int) random(2000, 4000);
+	return (short int) bpsensor.pressure()*10;
 }
 
 short int getHumid()

@@ -1,5 +1,6 @@
 #include <DHT22.h>
 #include <SPI.h>
+#include <MPL115A1.h>
 #include <SensorSystem.h>
 //#include <SoftwareSerial.h>
 
@@ -9,6 +10,7 @@ void setup()
 {
   randomSeed(analogRead(0));
   Serial.begin(9600);
+  bpsensor.begin();
   Serial.println("Starting...");
   //SerialBT.begin(9600);
 }
