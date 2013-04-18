@@ -2,7 +2,7 @@
 #include <SPI.h>
 #include <MPL115A1.h>
 #include <SensorSystem.h>
-//#include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 
 String command;
 
@@ -12,7 +12,8 @@ void setup()
   Serial.begin(9600);
   bpsensor.begin();
   Serial.println("Starting...");
-  //SerialBT.begin(9600);
+  //SERIALBT.begin(9600);
+  //SerialBT.println("Starting...");
 }
 
 void loop()
@@ -20,7 +21,7 @@ void loop()
   // Read in command
   Serial.println("Listening for command...");
   command = readInCommand();
-  Serial.println("Received: " + command);
+  //Serial.println("Received: " + command);
   
 
   // Execute command

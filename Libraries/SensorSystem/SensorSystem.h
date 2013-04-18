@@ -16,12 +16,14 @@
 #include <Arduino.h>
 #include <DHT22.h>
 #include <MPL115A1.h>
+#include <SoftwareSerial.h>
 
 // Define which serial to use,
 //  Change return values to SoftwareSerial "SerialBT"
 //  Keep error returns to regular Serial
 #define SERIALBT Serial
-#define DEBUG Serial
+SoftwareSerial SerialBT(6, 5);
+#define DEBUG SerialBT
 
 #define DELAYTIME 2000
 
@@ -33,7 +35,6 @@ DHT22_ERROR_t errorCode;
 MPL115A1 bpsensor;
 
 unsigned long lastReadTime = 0;
-//SoftwareSerial SerialBT(3, 4);
 
 // Returns whether or not new vals were grabbed
 bool humid_grabNewVals( DHT22& hs, unsigned long& lastReadTime )
@@ -50,28 +51,28 @@ bool humid_grabNewVals( DHT22& hs, unsigned long& lastReadTime )
 	switch(errorCode)
 	{
 	case DHT_ERROR_NONE:
-		Serial.println("Got Data");
+		DEBUG.println("Got Data");
 		return true;
 	case DHT_ERROR_CHECKSUM:
-		Serial.println("Checksum Error");
+		DEBUG.println("Checksum Error");
 		break;
 	case DHT_BUS_HUNG:
-		Serial.println("BUS Hung");
+		DEBUG.println("BUS Hung");
 		break;
 	case DHT_ERROR_NOT_PRESENT:
-		Serial.println("Not Present");
+		DEBUG.println("Not Present");
 		break;
 	case DHT_ERROR_ACK_TOO_LONG:
-		Serial.println("ACK Timeout");
+		DEBUG.println("ACK Timeout");
 		break;
 	case DHT_ERROR_SYNC_TIMEOUT:
-		Serial.println("Sync Timeout");
+		DEBUG.println("Sync Timeout");
 		break;
 	case DHT_ERROR_DATA_TIMEOUT:
-		Serial.println("Data Timeout");
+		DEBUG.println("Data Timeout");
 		break;
 	case DHT_ERROR_TOOQUICK:
-		Serial.println("Data Timeout");
+		DEBUG.println("Data Timeout");
 		break;
 	}
 	
@@ -115,20 +116,21 @@ String readInCommand()
 	// Wait until input is available
 	while( !SERIALBT.available() );
 	// Grab until space, newline, or EOF
-	while( SERIALBT.available() )
+	for(int x = 0; x < 2 && SERIALBT.available(); ++x)
 	{
 		// Convert from int to char
 		char inChar = (char)Serial.read();
 
 		// If it's the end of a word, end input
-		if( (inChar == '\0' || inChar == '\n' || inChar == ' ')
-				&& comm != "" )
+		if( inChar == '\0' || inChar == '\n'
+				|| inChar == '\r' || inChar == ' ' )
 			return comm;
 		// Else concatenate with rest of word
 		else
 			comm += inChar;	
 		// Delay to allow Serial buffer to populate, otherwise cuts off
-		delay(2);
+		
+		delay(10);
 	}
 	return comm;
 }
@@ -142,14 +144,17 @@ bool execCommand( String comm )
 		return 0;
 	case 't':
 	case 'T':
+		SERIALBT.print('=');
 		SERIALBT.println( getTemp(comm.charAt(1)) );
 		return 0;
 	case 'p':
 	case 'P':
+		SERIALBT.print('=');
 		SERIALBT.println( getPress() );
 		return 0;
 	case 'h':
 	case 'H':
+		SERIALBT.print('=');
 		SERIALBT.println( getHumid() );
 		return 0;
 	
