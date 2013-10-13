@@ -20,6 +20,7 @@
 //
 //
 // Multi Channel Radio Receiver Class
+// v1.0.1
 //    Based on FlySky FS-R6B 6 Channel Receiver
 //
 //============================================================

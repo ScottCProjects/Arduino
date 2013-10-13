@@ -12,7 +12,7 @@ RCBot bot( DCMotor(3, 5), DCMotor(9, 10),
 void setup()
 {
   Serial.begin(9600);
-  //bot.setThrotAndTurn(3, 1);
+  bot.setThrotAndTurn(2, 1);
   
 }
 
