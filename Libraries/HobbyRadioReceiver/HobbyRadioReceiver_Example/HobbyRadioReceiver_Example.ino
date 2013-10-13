@@ -1,16 +1,20 @@
 // Scott Camarena
 // October 2013
 //
-// 6 Channel Radio Receiver Class Example
+// Hobby Radio Receiver Class Example
 //=======================================================
 
-#include "sixChReceiver.h"
+#include "HobbyRadioReceiver.h"
 
-sixChReceiver rec( A0, A1, A2, A3 );
+// Specify the number of channels,
+//   followed by the pins the channels are attached to
+HobbyRadioReceiver rec( 4, A0, A1, A2, A3 );
 int val;
 void setup()
 {
   Serial.begin(9600);
+  Serial.print( "Num Channels: " );
+  Serial.println(rec.getNumChannels());
 }
 
 void loop()
