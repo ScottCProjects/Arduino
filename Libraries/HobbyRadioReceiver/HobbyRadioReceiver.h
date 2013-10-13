@@ -35,7 +35,7 @@
 #define DEADZONEAREA 10
 
 // Valid Modes
-#define CENTERDEADZONE 10
+#define CENTERDEADZONE 0
 #define CENTER 1
 #define FULL 2
 #define TOGGLE 3
