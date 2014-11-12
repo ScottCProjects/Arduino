@@ -12,6 +12,11 @@ RCBot bot( DCMotor(3, 5), DCMotor(9, 10),
 void setup()
 {
   Serial.begin(9600);
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);               // wait for a second
+  digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000);  
   bot.setThrotAndTurn(2, 1);
   
 }

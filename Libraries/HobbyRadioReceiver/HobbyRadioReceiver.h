@@ -19,8 +19,8 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-// Multi Channel Radio Receiver Class
 // v1.0.1
+// Multi Channel Radio Receiver Class
 //    Based on FlySky FS-R6B 6 Channel Receiver
 //
 //============================================================

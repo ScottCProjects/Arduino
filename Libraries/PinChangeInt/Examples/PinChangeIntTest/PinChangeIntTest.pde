@@ -1,4 +1,7 @@
-// PinChangeIntTest, version 1.0 Wed Feb 15 07:25:09 CST 2012
+// PinChangeIntTest
+// version 1.0 Wed Feb 15 07:25:09 CST 2012
+// Version 1.1 Fri Jun 22 19:10:50 CDT 2012 minor tweaks to eliminate compiler warnings.  Also, there were bugfixes in ByteBuffer.
+//                                          I had some "cli()" without "sei()" in there.
 // See the Wiki at http://code.google.com/p/arduino-pinchangeint/wiki for more information.
 // This sketch requires the ByteBuffer library, which is found in the PinChangeInt zipfile.
 //-------- define these in your sketch, if applicable ----------------------------------------------------------
@@ -30,31 +33,32 @@
 // This example demonstrates a configuration of 6 interrupting pins and 3 interrupt functions.
 // A variety of interrupting pins have been chosen, so as to test all PORTs on the Arduino.
 // The pins are as follows:
-// For the Analog Input pins used as digital input pins, and you can use 14, 15, 16, etc.
-// or you can use A0, A1, A2, etc. (the Arduino code comes with #define's
-// for the Analog Input pins and will properly recognize e.g., pinMode(A0, INPUT);
-#define PIN1 2  // port D
-#define PIN2 3
-#define PIN3 11 // Port B
-#define PIN4 12
-#define PIN5 A3 // Port C, also can be given as "17"
-#define PIN6 A4 // starts and stops the count
-// All pins send interrupts.  Arduino pins 2 and A4 (PIN1,6) interrupt on FALLING.
-// Arduino pins 3 and 12 (PIN2,4) interrupt on RISING.
-// Arduino pins 11 and A3 (PIN5) interrupts on CHANGE.
-// quicfunc0 is attached to Arduino pins 2, 3, 11, and 12 (PIN1-4)
-// quicfunc1 is attached to Arduino pin A3 (PIN5)
-// quicfunc2 is attached to Arduino pin A4 (PIN6).
+#define tPIN1 2  // port D
+#define tPIN2 3
+#define tPIN3 11 // Port B
+#define tPIN4 12
+#define tPIN5 A3 // Port C, also can be given as "17"
+#define tPIN6 A4 // starts and stops the count
+// All pins send interrupts.  Arduino pins 2 and A4 (tPIN1,6) interrupt on FALLING.
+// Arduino pins 3 and 12 (tPIN2,4) interrupt on RISING.
+// Arduino pins 11 and A3 (tPIN5) interrupts on CHANGE.
+// quicfunc0 is attached to Arduino pins 2, 3, 11, and 12 (tPIN1-4)
+// quicfunc1 is attached to Arduino pin A3 (tPIN5)
+// quicfunc2 is attached to Arduino pin A4 (tPIN6).
+// NOTE:
+// For the Analog Input pins used as digital input pins, you can use numbers such as 14, 15, 16, etc.
+// or you can use A0, A1, A2, etc. (the Arduino code comes with #define's for the Analog Input pin
+// names and will properly recognize e.g., pinMode(A0, INPUT));
 
 // HOW IT WORKS
-// The interrupt on Arduino pin A4 (PIN6) will, when triggered, start the counting of interrupts.  
+// The interrupt on Arduino pin A4 (tPIN6) will, when triggered, start the counting of interrupts.  
 // The array interrupt_count0[20] is updated in the interrupts; each cell keeps track of the number
 // of interrupts on one of the 20 available interrupt pins on the Arduino.  Every second in the main
 // loop the array is scanned and registered interrupts are reported for all pins interrupted since
 // the previous second.  If no interrupts, the output is quiet.
 
-// PIN6 is special.  Not only does it start the counting of the interrups, but it turns on and off
-// interrupts on pins 2, 11, and A3/17 (PIN1, PIN3, PIN5).  All pins start by interrupting, but after
+// tPIN6 is special.  Not only does it start the counting of the interrups, but it turns on and off
+// interrupts on pins 2, 11, and A3/17 (tPIN1, tPIN3, tPIN5).  All pins start by interrupting, but after
 // the count is turned on and then turned off, the 3 pins are detached from interrupts.
 // Everytime thereafter when the count is turned off the 3 pins are detached.  They are reattached
 // when turned on.
@@ -76,7 +80,7 @@
 
 /* WHAT TO LOOK FOR
  Output is sent to the serial line, so the Arduino IDE's serial terminal should be opened.
- Upon startup, press PINS1-5.  You will see output like this:
+ Upon startup, press tPINS1-5.  You will see output like this:
 -F-f0p2-P4 (counting off)
 ..*C*f0p11-P2 (counting off)
 +R+f0p3-P4 (counting off)
@@ -91,7 +95,7 @@
     The pin should have started out at the high level, so likely the signal fell during onother interrupt, and now
     the rise has been caught.
     
- Now press the button attached to PIN6 (in our case, A4 or D18).  You will see something like this:
+ Now press the button attached to tPIN6 (in our case, A4 or D18).  You will see something like this:
 -F-START! f2p18-P3
 .Count for pin A4 is 1
  This shows that
@@ -112,15 +116,15 @@ Count for pin D11 is 9
 -F-f0p2-P4
 .Count for pin D2 is 1
 Count for pin D3 is 1
- These codes reflect the interrupts, as described above.  This output will take place until you press PIN6:
+ These codes reflect the interrupts, as described above.  This output will take place until you press tPIN6:
 -F-f2: STOP! Counting off.
-Interrupt OFF on PIN1 (2) PIN3 (11) PIN5 (17)
+Interrupt OFF on tPIN1 (2) tPIN3 (11) tPIN5 (17)
  Then you will see output like this:
 .....................+R+f0p12-P2 (counting off)
 .+R+f0p12-P2 (counting off)
 +R+f0p12-P2 (counting off)
 +R+f0p12-P2 (counting off)
- and PIN1, PIN3, and PIN5 will not trigger interrupts.
+ and tPIN1, tPIN3, and tPIN5 will not trigger interrupts.
 */
 // NOTES
 // Output overwrites:
@@ -157,7 +161,7 @@ Interrupt OFF on PIN1 (2) PIN3 (11) PIN5 (17)
                   +----+
 */
 
-uint8_t pins[6]={ PIN1, PIN2, PIN3, PIN4, PIN5, PIN6 };
+uint8_t pins[6]={ tPIN1, tPIN2, tPIN3, tPIN4, tPIN5, tPIN6 };
 uint8_t ports[6]={ 0, 0, 0, 0, 0, 0 };
 
 uint8_t latest_interrupted_pin;
@@ -198,13 +202,13 @@ void uint8ToString(char *outString, uint8_t number) {
 void showMode() {
   switch (mode) {
   case FALLING:
-    printBuffer.putString("-F-");
+    printBuffer.putString((char *) "-F-");
   break;
   case RISING:
-    printBuffer.putString("+R+");
+    printBuffer.putString((char *) "+R+");
   break;
   case CHANGE:
-    printBuffer.putString("*C*");
+    printBuffer.putString((char *) "*C*");
   break;
   }
 }
@@ -217,11 +221,11 @@ void quicfunc0() {
     interrupt_count[latest_interrupted_pin]++;
   }
   uint8ToString(numBuffer, latest_interrupted_pin);
-  printBuffer.putString("f0p"); printBuffer.putString(numBuffer); printBuffer.putString("-P");
+  printBuffer.putString((char *) "f0p"); printBuffer.putString(numBuffer); printBuffer.putString((char *) "-P");
   uint8ToString(numBuffer, digitalPinToPort(latest_interrupted_pin));
   printBuffer.putString(numBuffer);
-  if (start !=1) printBuffer.putString(" (counting off)");
-  printBuffer.putString("\n");
+  if (start !=1) printBuffer.putString((char *) " (counting off)");
+  printBuffer.putString((char *) "\n");
 };
 
 void quicfunc1() {
@@ -232,11 +236,11 @@ void quicfunc1() {
     interrupt_count[latest_interrupted_pin]++;
   }
   uint8ToString(numBuffer, latest_interrupted_pin);
-  printBuffer.putString("f1p"); printBuffer.putString(numBuffer); printBuffer.putString("-P");
+  printBuffer.putString((char *) "f1p"); printBuffer.putString(numBuffer); printBuffer.putString((char *) "-P");
   uint8ToString(numBuffer, digitalPinToPort(latest_interrupted_pin));
   printBuffer.putString(numBuffer);
-  if (start !=1) printBuffer.putString(" (counting off)");
-  printBuffer.putString("\n");
+  if (start !=1) printBuffer.putString((char *) " (counting off)");
+  printBuffer.putString((char *) "\n");
 };
 
 void quicfunc2() {
@@ -244,28 +248,28 @@ void quicfunc2() {
   mode=PCintPort::pinmode;
   showMode();
   if (start == 1) {
-    printBuffer.putString("f2: STOP! Counting off.\n");
-    printBuffer.putString("Interrupt OFF on PIN1 ("); uint8ToString(numBuffer, PIN1), printBuffer.putString(numBuffer);
-    printBuffer.putString(") PIN3 (");uint8ToString(numBuffer, PIN3), printBuffer.putString(numBuffer);
-    printBuffer.putString(") PIN5 (");uint8ToString(numBuffer, PIN5), printBuffer.putString(numBuffer);
-    printBuffer.putString(")\n");
-    PCintPort::detachInterrupt(PIN1); PCintPort::detachInterrupt(PIN3); PCintPort::detachInterrupt(PIN5); 
+    printBuffer.putString((char *) "f2: STOP! Counting off.\n");
+    printBuffer.putString((char *) "Interrupt OFF on tPIN1 ("); uint8ToString(numBuffer, tPIN1), printBuffer.putString(numBuffer);
+    printBuffer.putString((char *) ") tPIN3 (");uint8ToString(numBuffer, tPIN3), printBuffer.putString(numBuffer);
+    printBuffer.putString((char *) ") tPIN5 (");uint8ToString(numBuffer, tPIN5), printBuffer.putString(numBuffer);
+    printBuffer.putString((char *) ")\n");
+    PCintPort::detachInterrupt(tPIN1); PCintPort::detachInterrupt(tPIN3); PCintPort::detachInterrupt(tPIN5); 
     start=0;
   } else {
     start=1;
     interrupt_count[latest_interrupted_pin]++;
-    printBuffer.putString("START! f2p");
+    printBuffer.putString((char *) "START! f2p");
     uint8ToString(numBuffer, latest_interrupted_pin);
-    printBuffer.putString(numBuffer); printBuffer.putString("-P");
+    printBuffer.putString(numBuffer); printBuffer.putString((char *) "-P");
     uint8ToString(numBuffer, digitalPinToPort(latest_interrupted_pin));
-    printBuffer.putString(numBuffer); printBuffer.putString("\n");
+    printBuffer.putString(numBuffer); printBuffer.putString((char *) "\n");
     if (! initial) {
-      PCintPort::attachInterrupt(PIN1, &quicfunc0, FALLING);
-      PCintPort::attachInterrupt(PIN3, &quicfunc0, CHANGE);
-      PCintPort::attachInterrupt(PIN5, &quicfunc1, CHANGE);
+      PCintPort::attachInterrupt(tPIN1, &quicfunc0, FALLING);
+      PCintPort::attachInterrupt(tPIN3, &quicfunc0, CHANGE);
+      PCintPort::attachInterrupt(tPIN5, &quicfunc1, CHANGE);
     } else {
       initial=false;
-    }
+    }                                                                                                
   }
 };
 
@@ -279,34 +283,36 @@ void setup() {
     pinMode(pins[i], INPUT); digitalWrite(pins[i], HIGH);
     ports[i]=digitalPinToPort(pins[i]);
     switch (pins[i]) {
-    case PIN1:
+    case tPIN1:
         PCintPort::attachInterrupt(pins[i], &quicfunc0, FALLING);
     break;
-    case PIN3:
+    case tPIN3:
         PCintPort::attachInterrupt(pins[i], &quicfunc0, CHANGE);
     break;
-    case PIN2:
-    case PIN4:
+    case tPIN2:
+    case tPIN4:
         PCintPort::attachInterrupt(pins[i], &quicfunc0, RISING);
     break;
-    case PIN5:
+    case tPIN5:
         PCintPort::attachInterrupt(pins[i], &quicfunc1, CHANGE);
     break;
-    case PIN6:
+    case tPIN6:
         PCintPort::attachInterrupt(pins[i], &quicfunc2, FALLING);
     break;
     }
   }
-  Serial.println(printBuffer.getCapacity(), DEC);
-  Serial.println("---------------------------------------");
+  //Serial.println(printBuffer.getCapacity(), DEC);
+  //Serial.println("*---------------------------------------*");
+  Serial.print("*---*");
+  delay(250);
   begintime=millis();
 }
 
 void loop() {
   now=millis();
   uint8_t count;
-  uint8_t bufsize;
   char outChar;
+  // uint8_t bufsize;
   //if (printBuffer.getSize() != 0) { Serial.print("SZ:"); Serial.println (printBuffer.getSize(), DEC); };
   //bufsize=printBuffer.getSize();
   //if (bufsize > 0) { Serial.print("S:"); Serial.println(bufsize); }

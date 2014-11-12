@@ -8,14 +8,14 @@
 #include <TimeAlarms.h>
 
 
-#define ST_HOUR 8
-#define ST_MIN 45
+#define ST_HOUR 23
+#define ST_MIN 30
 
 #define TANK_LED_PIN 8
 #define TOP_LED_PIN 13
 #define SERVO_PIN 6
 #define MIDPOINT 90
-#define MAXDAYSFOOD 2
+#define MAXDAYSFOOD 3
 
 
 Servo feeder;
@@ -25,7 +25,7 @@ int dayNum;
 // Degrees of rotation to drop each day's food.
 // Rotation to the right for first 4 days,
 //  and back to the left for last 4 days
-int dayDrop[MAXDAYSFOOD] = {0, 180};
+int dayDrop[MAXDAYSFOOD] = {0, 180, 90};
 
 void blinkLED(int pin, int times, int rate)
 {
@@ -62,13 +62,13 @@ void feedFish()
   blinkLED(TANK_LED_PIN, 3, 200);
   Serial.print("Feeding fish - Day");
   Serial.println(dayNum+1);
-  // Rotate the feeder to drop current day's food,
-  //  rotate back to mid,
-  //  then incriment the day.
   if( dayNum < MAXDAYSFOOD )
   {
+    // Rotate the feeder to drop current day's food,
+    //  then incriment the day.
     feeder.write(dayDrop[dayNum++]);
     delay(200);
+    //  rotate back to mid,
     feeder.write(MIDPOINT);
   }
     
@@ -83,16 +83,16 @@ void setup()
   digitalWrite(TANK_LED_PIN, LOW);
   Serial.begin(9600);
   feeder.attach(SERVO_PIN);
-  setTime(ST_HOUR, ST_MIN, 00, 7, 3, 13); // set time to 8:00:00pm July 2 2013
+  setTime(ST_HOUR, ST_MIN, 00, 12, 25, 13); // set time to 8:00:00pm July 2 2013
   resetFeeder();
   // Feed fish once a day at 8am.
-  //Alarm.alarmRepeat( 8, 00, 5, feedFish );
-  //Alarm.alarmRepeat( 8, 00, 15, feedFish );
-  //Alarm.alarmRepeat( 8, 00, 10, feedFish );
+  //Alarm.alarmRepeat( ST_HOUR, ST_MIN, 5, feedFish );
+  //Alarm.alarmRepeat( ST_HOUR, ST_MIN, 15, feedFish );
+  //Alarm.alarmRepeat( ST_HOUR, ST_MIN, 10, feedFish );
   Alarm.alarmOnce( ST_HOUR, ST_MIN, 10, feedFish );
   resetFeeder();
-  Alarm.alarmOnce( dowFriday, 8, 00, 00, feedFish );
   Alarm.alarmOnce( dowSaturday, 8, 00, 00, feedFish );
+  Alarm.alarmOnce( dowTuesday, 8, 00, 00, feedFish );
 }
 
 
