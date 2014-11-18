@@ -7,17 +7,17 @@
 
 #include "EncodedMotor.h"
 
-#define L_ENC    2
+#define L_ENC_INT    0
 #define L_PIN_A  5
 #define L_PIN_B  6
 
-#define R_ENC    3
+#define R_ENC_INT    1
 #define R_PIN_A  7
 #define R_PIN_B  8
 
 
-EncodedMotor leftM( L_ENC, L_PIN_A, L_PIN_B );
-EncodedMotor rightM( R_ENC, R_PIN_A, R_PIN_B );
+EncodedMotor leftM( L_ENC_INT, L_PIN_A, L_PIN_B );
+EncodedMotor rightM( R_ENC_INT, R_PIN_A, R_PIN_B );
 
 // Functions to attach to interrupt
 void leftISR()
@@ -41,8 +41,8 @@ void setup()
 {
   Serial.begin(9600);
   EncodedMotor::timerSetup();
-  attachInterrupt(0, leftISR, CHANGE);
-  attachInterrupt(1, rightISR, CHANGE);
+  attachInterrupt(leftM.getEncInt(), leftISR, CHANGE);
+  attachInterrupt(rightM.getEncInt(), rightISR, CHANGE);
   leftM.go(10000);
   rightM.go(5000);
 }

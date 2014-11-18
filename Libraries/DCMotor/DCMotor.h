@@ -21,7 +21,7 @@ public:
 	DCMotor( int pA, int pB );
 	
 	void on( char dir, byte pow = 255 );
-	void on( int pow = 255 );
+	void on( int pow = 255 ); // Takes 'int' to handle negatives
 	void off();
 	void forward( byte pow = 255 );
 	void back( byte pow = 255 );

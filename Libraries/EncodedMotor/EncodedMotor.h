@@ -34,21 +34,27 @@
 class EncodedMotor
 {
 private:
-	int encPin1, encPin2, pinA, pinB;
+	int encInt, pinA, pinB;
 	volatile int stepCount;
 	volatile int stepsPerSec, expectedSteps;
 	bool forward;
-	byte power;
+	volatile byte power;
 
 public:
-	EncodedMotor( int ePin, int pA, int pB )
-	: encPin1(ePin), encPin2(-1), pinA(pA), pinB(pB), power(0),
-			stepCount(0), stepsPerSec(0), expectedSteps(0), forward(true)
-	{
-	}
+	EncodedMotor( int eInt, int pA, int pB )
+	: encInt(eInt), pinA(pA), pinB(pB), power(0), stepCount(0),
+			stepsPerSec(0), expectedSteps(0), forward(true)
+	{}
+
+	int getEncInt(){ return encInt; }
+	int getSteps(){ return stepCount; }
+	bool isForward(){ return forward; }
+	byte getPower(){ return power; }
 
 	static void timerSetup()
-	{
+	{	// From Instructables
+		// http://www.instructables.com/id/Arduino-Timer-Interrupts/
+
 		cli();//stop interrupts
 		//set timer1 interrupt at 1Hz
 		TCCR1A = 0;// set entire TCCR1A register to 0
@@ -139,7 +145,6 @@ public:
 
 		// Reset stepCount
 		stepCount = 0;
-Serial.println(power);
 		analogWrite( pinA, power );
 		digitalWrite( pinB, LOW );
 	}
